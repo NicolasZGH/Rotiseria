@@ -6,6 +6,9 @@ if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
 
+#obtener la fecha actual para usarla en el campo de reserva
+$fechaActual = date("Y-m-d");
+
 #verificar si se envió un pedido
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset($_POST['nombreCliente'])) {
     $productos = $_POST['productos'];
@@ -223,7 +226,7 @@ $conn->close();
     <input type="checkbox" id="reserva" name="reserva" value="1">
     <div id="fecha-entrega-group">
         <label for="fecha_entrega">Fecha de Entrega:</label>
-        <input type="date" id="fecha_entrega" name="fecha_entrega">
+        <input type="date" id="fecha_entrega" name="fecha_entrega" min="<?php echo $fechaActual; ?>">
         <br>
         <label for="hora_entrega">Hora de Entrega:</label>
         <input type="time" id="hora_entrega" name="hora_entrega" min="18:00" max="01:00">
