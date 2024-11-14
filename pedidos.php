@@ -145,7 +145,7 @@ $conn->close();
         font-size: 20px;
     }
 
-    /* Checkbox más grande y personalizado */
+    /*Checkbox más grande y personalizado */
     #reserva {
         transform: scale(1.8);
         margin-right: 8px;
@@ -154,7 +154,7 @@ $conn->close();
         accent-color: #0056b3;
     }
 
-    /* Efectos hover mejorados */
+    /*efectos hover mejorados */
     #fecha-entrega-group input:hover {
         border-color: #90a4ae;
         transition: all 0.3s ease;
@@ -166,12 +166,12 @@ $conn->close();
         box-shadow: 0 0 0 3px rgba(0,86,179,0.25);
     }
 
-    /*Estilo para el contenedor del checkbox */
+    /*estilo para el contenedor del checkbox */
     .form-group {
         margin: 20px 0;
     }
 
-    /*Estilo para cuando el checkbox está marcado */
+    /*estilo para cuando el checkbox está marcado */
     #reserva:checked {
         background-color: #0056b3;
     }
