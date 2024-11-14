@@ -64,10 +64,95 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
     echo "<title>Bienvenido</title>";
     echo "<link rel='stylesheet' href='style/inicio.css'>";
     echo "<link rel='stylesheet' href='style/navbar.css'>";
+    echo "<link rel='icon' href='images/icon.png'>";
+    echo "<style>
+            .edit-product-form {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            .form-group input[type='text'],
+            .form-group input[type='number'],
+            .form-group textarea {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            .button-container {
+                margin-top: 20px;
+                text-align: center;
+            }
+            .button-container button {
+                background-color: #e4491a;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                margin: 0 5px;
+            }
+            .button-container button:hover {
+                background-color: #bc3813;
+            }
+            .add-product-button {
+                display: inline-block;
+                padding: 10px 15px;
+                margin: 20px 0;
+                background-color: #e4491a;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                font-size: 16px;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+            .add-product-button:hover {
+                background-color: #bc3813;
+            }
+            .tabla-productos {
+                width: 20%;
+                margin: 0 auto;
+                font-size: 0.9em; 
+            }
+            .tabla-productos th, .tabla-productos td {
+                padding: 8px;
+                text-align: center;
+            }
+            .boton-agregar {
+                display: block;
+                margin: 10px auto;
+                padding: 10px 20px;
+                background-color: #e45404;
+                color: #fff;
+                text-align: center;
+                font-weight: bold;
+                border-radius: 5px;
+                text-decoration: none;
+                width: fit-content;
+            }
+            .boton-agregar:hover {
+                background-color: #003d82;
+            }
+    </style>";
     echo "</head>";
     echo "<body>";
 
-    // Barra de navegación
+    #barra de navegación
     echo "<div class='navbar'>";
     echo "<a href='inicio.php?section=inicio'>Inicio</a>";
     echo "<a href='pedidos.php?section=pedidos'>Agregar Pedidos</a>";
@@ -80,14 +165,16 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
     echo "<div class='content'>";
 
 
-    // Sección de Productos
+    #Sección de Productos
     if ($section == 'productos') {
-        // Mostrar productos de la tabla
+
+        #Mostrar productos de la tabla
         $sql_productos = "SELECT idProductos, Nombre, Precio, Descripcion FROM productos";
         $result_productos = $conn->query($sql_productos);
 
         if ($result_productos->num_rows > 0) {
             echo "<h2>Tabla de Productos</h2>";
+            echo "<a href='productos.php?section=agregar' class='add-product-button style='text-align:center;' '>Agregar Producto</a>";
             echo "<table>";
             echo "<tr><th>Producto</th><th>Precio</th><th>Descripcion</th><th>Acciones</th></tr>";
             while($row = $result_productos->fetch_assoc()) {
@@ -96,9 +183,9 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
                 echo "<td>" . $row["Precio"] . "</td>";
                 echo "<td>" . $row["Descripcion"] . "</td>";
                 echo "<td>";
-                // Botón para editar el producto
+                #Botón para editar el producto
                 echo "<a href='productos.php?section=editar&producto_id=" . $row["idProductos"] . "'><button type='submit' name='editar_producto'>Editar</button></a>";
-                // Botón para eliminar el producto
+                #Botón para eliminar el producto
                 echo "<form method='POST' style='display:inline-block;'>";
                 echo "<input type='hidden' name='producto_id' value='" . $row["idProductos"] . "'>";
                 echo "<button type='submit' name='eliminar_producto'>Eliminar</button>";
@@ -111,28 +198,74 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
             echo "No hay productos disponibles.";
         }
     }
+    echo "<div class='content'>";
 
-    // Acción de eliminar producto
+#Sección formulario para agregar un nuevo producto
+if ($section == 'agregar') {
+
+    echo "<form method='POST' action='productos.php?section=productos'>";
+    
+    echo "<div class='form-group'>";
+    echo "<label for='Nombre'>Nombre del Producto</label>";
+    echo "<input type='text' id='Nombre' name='Nombre' required>";
+    echo "</div>";
+    
+    echo "<div class='form-group'>";
+    echo "<label for='Precio'>Precio</label>";
+    echo "<input type='number' step='0.01' id='Precio' name='Precio' required>";
+    echo "</div>";
+    
+    echo "<div class='form-group'>";
+    echo "<label for='Descripcion'>Descripción</label>";
+    echo "<textarea id='Descripcion' name='Descripcion'></textarea>";
+    echo "</div>";
+    
+    echo "<div class='button-container'>";
+    echo "<button type='submit' name='agregar_producto'>Agregar Producto</button>";
+    echo "<button type='button' onclick='window.location.href=\"productos.php?section=productos\"'>Cancelar</button>";
+    echo "</div>";
+    
+    echo "</form>";
+}
+#Acción para agregar un nuevo producto
+if (isset($_POST['agregar_producto'])) {
+    $nombre = $_POST['Nombre'];
+    $precio = $_POST['Precio'];
+    $descripcion = $_POST['Descripcion'];
+
+    #Insertar el nuevo producto en la base de datos
+    $sql_insertar = "INSERT INTO productos (Nombre, Precio, Descripcion) VALUES (?, ?, ?)";
+    $stmt_insertar = $conn->prepare($sql_insertar);
+    $stmt_insertar->bind_param("sds", $nombre, $precio, $descripcion);
+    $stmt_insertar->execute();
+    $stmt_insertar->close();
+
+    #Redirigir al usuario a la página de productos después de agregarlo
+    header("Location: productos.php?section=productos");
+    exit();
+}
+
+    #Acción de eliminar producto
     if (isset($_POST['eliminar_producto'])) {
         $producto_id = $_POST['producto_id'];
 
-        // Eliminar de la tabla de productos
+        #Eliminar de la tabla de productos
         $sql_delete = "DELETE FROM productos WHERE idProductos = ?";
         $stmt_delete = $conn->prepare($sql_delete);
         $stmt_delete->bind_param("i", $producto_id);
         $stmt_delete->execute();
         $stmt_delete->close();
 
-        // Recargar la página
+        #Recargar la página
         header("Location: productos.php?section=productos");
         exit();
     }
 
-    // Acción de editar producto
+    #Acción de editar producto
     if ($section == 'editar' && isset($_GET['producto_id'])) {
         $producto_id = $_GET['producto_id'];
 
-        // Obtener los datos actuales del producto
+        #Obtener los datos actuales del producto
         $sql_editar = "SELECT idProductos, Nombre, Precio, Descripcion FROM productos WHERE idProductos = ?";
         $stmt_editar = $conn->prepare($sql_editar);
         $stmt_editar->bind_param("i", $producto_id);
@@ -142,7 +275,7 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
         if ($result_editar->num_rows == 1) {
             $row = $result_editar->fetch_assoc();
         
-            // Mostrar formulario para editar producto
+            #Mostrar formulario para editar producto
             echo "<div class='edit-product-form'>";
             echo "<h2>Editar Producto</h2>";
             echo "<form method='POST'>";
@@ -177,26 +310,26 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
         $stmt_editar->close();
     }
 
-    // Acción para actualizar producto
+    #Acción para actualizar producto
     if (isset($_POST['actualizar_producto'])) {
         $producto_id = $_POST['producto_id'];
         $nombre = $_POST['Nombre'];
         $precio = $_POST['Precio'];
         $descripcion = $_POST['Descripcion'];
 
-        // Actualizar el producto en la base de datos
+        #Actualizar el producto en la base de datos
         $sql_actualizar = "UPDATE productos SET Nombre = ?, Precio = ?, Descripcion = ? WHERE idProductos = ?";
         $stmt_actualizar = $conn->prepare($sql_actualizar);
         $stmt_actualizar->bind_param("sdsi", $nombre, $precio, $descripcion, $producto_id);
         $stmt_actualizar->execute();
         $stmt_actualizar->close();
 
-        // Recargar la página después de actualizar
+        #Recargar la página después de actualizar
         header("Location: productos.php?section=productos");
         exit();
     }
 
-    echo "</div>"; // Cierre del div content
+    echo "</div>"; #Cierre del div content
     echo "</body>";
     echo "</html>";
 }
