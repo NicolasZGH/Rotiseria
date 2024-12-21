@@ -33,7 +33,7 @@ $_SESSION['last_activity'] = time();
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
-header('Expires: Sun, 02 Jan 1990 00:00:00 GMT');
+header('Expires: Sun, 02 Jan 2023 00:00:00 GMT');
 
 #html
 echo "<!DOCTYPE html>";
@@ -136,7 +136,7 @@ echo "<h2>Pedidos Reservados</h2>";
 if (count($pedidosReservados) > 0) {
     echo "<table class='tabla-pedidos' border='0'>";
     foreach ($pedidosReservados as $cliente => $reservados) {
-        echo "<tr><th colspan='5' style='background-color:#8b4513'>Cliente: $cliente | Total Acumulado: $" . number_format($totalPorCliente[$cliente], 2) . "</th></tr>";
+        echo "<tr><th colspan='5' style='background-color:#b3180b'>Cliente: $cliente | Total Acumulado: $" . number_format($totalPorCliente[$cliente], 2) . "</th></tr>";
         echo "<tr><th>Producto</th><th>Cantidad</th><th>Precio Total</th><th>Fecha y Hora de Entrega</th><th>Acciones</th></tr>";
         foreach ($reservados as $pedido) {
             echo "<tr>";
