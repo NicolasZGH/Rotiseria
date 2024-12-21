@@ -10,10 +10,11 @@ if ($conn->connect_error) {
 $fechaActual = date("Y-m-d");
 
 #verificar si se envió un pedido
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset($_POST['nombreCliente'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset($_POST['nombreCliente']) && isset($_POST['apellidoCliente'])) {
     $productos = $_POST['productos'];
     $cantidades = $_POST['cantidades'];
     $nombreCliente = $_POST['nombreCliente'];
+    $apellidoCliente = $_POST['apellidoCliente'];
 
     #establecer si el pedido es una reserva
     $esReserva = isset($_POST['reserva']) && $_POST['reserva'] == '1' ? 1 : 0;
@@ -24,9 +25,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
     }
 
     #colocar cliente
-    $sql_cliente = "SELECT idClientes FROM Clientes WHERE Nombre = ?";
+    $sql_cliente = "SELECT idClientes FROM Clientes WHERE Nombre = ? AND Apellido = ?";
     $stmt_cliente = $conn->prepare($sql_cliente);
-    $stmt_cliente->bind_param("s", $nombreCliente);
+    $stmt_cliente->bind_param("ss", $nombreCliente, $apellidoCliente);
     $stmt_cliente->execute();
     $result_cliente = $stmt_cliente->get_result();
 
@@ -35,9 +36,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
         $idCliente = $row_cliente['idClientes'];
     } else {
         #colocar nuevo cliente si no existe
-        $sql_insert_cliente = "INSERT INTO Clientes (Nombre) VALUES (?)";
+        $sql_insert_cliente = "INSERT INTO Clientes (Nombre, Apellido) VALUES (?, ?)";
         $stmt_insert_cliente = $conn->prepare($sql_insert_cliente);
-        $stmt_insert_cliente->bind_param("s", $nombreCliente);
+        $stmt_insert_cliente->bind_param("ss", $nombreCliente, $apellidoCliente);
         if ($stmt_insert_cliente->execute()) {
             $idCliente = $stmt_insert_cliente->insert_id;
         } else {
@@ -189,8 +190,9 @@ $conn->close();
 <form method="POST" action="pedidos.php">
     <div class="form-group">
         <label for="nombreCliente">Nombre del Cliente:</label>
-        <input type="text" id="nombreCliente" name="nombreCliente" required pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos" 
-            list="clientes_sugeridos">
+        <input type="text" id="nombreCliente" name="nombreCliente" required pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos" list="clientes_sugeridos"><br><br>
+        <label for="apellidoCliente">Apellido del Cliente:</label>
+        <input type="text" id="apellidoCliente" name="apellidoCliente" required pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos">
         <datalist id="clientes_sugeridos">
             <?php while ($row = $result_clientes->fetch_assoc()): ?>
                 <option value="<?php echo $row['Nombre']; ?>">
