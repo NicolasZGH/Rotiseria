@@ -71,7 +71,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
 # Consulta para obtener los productos
 $sql_productos = "SELECT * FROM Productos";
 $result_productos = $conn->query($sql_productos);
-$sql_clientes = "SELECT Nombre, Apellido, Telefono FROM Clientes";
+$sql_clientes = "SELECT Nombre, Apellido, Telefono 
+                FROM Clientes 
+                ORDER BY Nombre ASC";
 $result_clientes = $conn->query($sql_clientes);
 
 $productos = [];
@@ -189,19 +191,27 @@ $conn->close();
 <form method="POST" action="pedidos.php">
     <div class="form-group">
         <label for="nombreCliente">Nombre del Cliente:</label>
-        <input type="text" id="nombreCliente" name="nombreCliente" required pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos" list="clientes_sugeridos"><br><br>
+        <input type="text" id="nombreCliente" name="nombreCliente" required 
+               pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos" 
+               list="clientes_sugeridos"
+               oninput="let [nombre, apellido, tel] = this.value.split(' | '); 
+                       this.value = nombre || '';
+                       document.getElementById('apellidoCliente').value = apellido || '';
+                       document.getElementById('telefono').value = tel || '';"><br><br>
+        
         <label for="apellidoCliente">Apellido del Cliente:</label>
-        <input type="text" id="apellidoCliente" name="apellidoCliente" required pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos"><br><br>
+        <input type="text" id="apellidoCliente" name="apellidoCliente" required 
+               pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos"><br><br>
+        
         <datalist id="clientes_sugeridos">
             <?php while ($row = $result_clientes->fetch_assoc()): ?>
-                <option value="<?php echo $row['Nombre']; ?>">
-                    <?php echo $row['Nombre'] . " " . $row['Apellido'] . " - " . $row['Telefono']; ?>
-                </option>
+                <option value="<?php echo $row['Nombre'] . ' | ' . $row['Apellido'] . ' | ' . $row['Telefono']; ?>">
             <?php endwhile; ?>
         </datalist>
+        
         <label for="telefono">Teléfono del Cliente:</label>
         <input type="tel" id="telefono" name="telefono" required 
-                pattern="[0-9]{10}" title="Ingrese un número telefónico">
+               title="Ingrese un número telefónico">
     </div>
 
     <div class="form-group">
