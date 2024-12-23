@@ -92,8 +92,9 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
                 box-sizing: border-box;
             }
             .button-container {
-                margin-top: 20px;
-                text-align: center;
+                display: flex;
+                justify-content: center; 
+                margin-top: 20px; 
             }
             .button-container button {
                 background-color: #e4491a;
@@ -108,30 +109,18 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
             .button-container button:hover {
                 background-color: #bc3813;
             }
-            .add-product-button {
-                display: inline-block;
-                padding: 10px 15px;
-                margin: 20px 0;
-                background-color: #e4491a;
-                color: white;
-                text-decoration: none;
-                border-radius: 4px;
-                font-size: 16px;
-                border: none;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-            }
-            .add-product-button:hover {
-                background-color: #bc3813;
-            }
+
             .tabla-productos {
-                width: 20%;
+                width: 80%;
                 margin: 0 auto;
-                font-size: 0.9em; 
+                font-size: 0.9em;
+                border-collapse: collapse;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1)
             }
             .tabla-productos th, .tabla-productos td {
-                padding: 8px;
+                padding: 6px;
                 text-align: center;
+                border: 1px solid #ddd;
             }
             .boton-agregar {
                 display: block;
@@ -147,6 +136,29 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
             }
             .boton-agregar:hover {
                 background-color: #003d82;
+            }
+            table {
+                width: 80%;
+                margin: 20px auto;
+                border-collapse: separate;
+                border-spacing: 0;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            th {
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            th, td {
+                padding: 10px 20px;
+                text-align: left;
+            }
+            td button {
+                padding: 8px 12px;
+                margin: 2px;
+                font-size: 0.9em;
             }
     </style>";
     echo "</head>";
@@ -221,7 +233,7 @@ if ($section == 'agregar') {
     echo "</div>";
     
     echo "<div class='button-container'>";
-    echo "<button type='submit' name='agregar_producto'>Agregar Producto</button>";
+    echo "<button type='submit' name='agregar_producto' class='add-product-button'>Agregar Producto</button>";
     echo "<button type='button' onclick='window.location.href=\"productos.php?section=productos\"'>Cancelar</button>";
     echo "</div>";
     
