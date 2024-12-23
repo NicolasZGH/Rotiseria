@@ -69,7 +69,7 @@ tr:nth-child(even) td {
 
 h2 {
     text-align: center;
-    color: #2c3e50;
+    color: #212121;
     font-size: 28px;
     margin: 30px 0;
     font-weight: 600;
@@ -147,7 +147,7 @@ a:hover {
 h1 {
     text-align: center;
     margin-top: 30px;
-    color: #2c3e50;
+    color: #212121;
     font-size: 32px;
     font-weight: 600;
 }
@@ -348,23 +348,78 @@ h1 {
 }
 
 /*estilo para el botón de Agregar Producto */
+/* Estilo actualizado para el botón de Agregar Producto */
 .add-product-button {
-    display: inline-block;
-    padding: 10px 20px;
-    margin: 20px 0;
-    background-color: #4CAF50;
+    background-color: #e4491a;
     color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
     text-decoration: none;
-    border-radius: 4px;
-    font-family: 'Roboto', sans-serif;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
     border: none;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
 }
 
 .add-product-button:hover {
-    background-color: #45a049;
+    background-color: #bc3813;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.add-product-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ícono + para el botón */
+.add-product-button::before {
+    content: '+';
+    font-size: 20px;
+    font-weight: bold;
+    margin-right: 8px;
+    line-height: 1;
+}
+
+/* Ajuste de la tabla */
+.tabla-productos {
+    width: 70%;
+    margin: 20px auto;
+    font-size: 0.9em;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tabla-productos th, 
+.tabla-productos td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.tabla-productos th {
+    background-color: #e4491a;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tabla-productos tr:last-child td {
+    border-bottom: none;
+}
+
+.tabla-productos tr:nth-child(even) td {
+    background-color: #f9f9f9;
 }
 
 /*estilo para la sección de productos */
@@ -373,6 +428,8 @@ h1 {
     max-width: 1200px;
     margin: 0 auto;
 }
+
+
 
 /*mejorar el espaciado de la tabla */
 table {
@@ -405,8 +462,9 @@ table {
             box-sizing: border-box;
         }
         .button-container {
-            margin-top: 20px;
-            text-align: center;
+            display: flex;
+            justify-content: center; 
+            margin-top: 20px; 
         }
         .button-container button {
             background-color: #e4491a;
@@ -418,22 +476,25 @@ table {
             font-size: 16px;
             margin: 0 5px;
         }
-        .button-container button:hover {
-            background-color: #bc3813;
+        .button-container {
+            display: flex; /* Flexbox para manejar la disposición */
+            justify-content: center; /* Centra horizontalmente los botones */
+            gap: 10px; /* Espacio entre los botones */
+            margin-top: 20px; /* Ajusta el margen superior si es necesario */
         }
         .add-product-button {
             display: inline-block;
-            padding: 10px 15px;
-            margin: 20px 0;
+            padding: 8px 12px;      /* Ajusta el espacio interno */
             background-color: #e4491a;
             color: white;
             text-decoration: none;
             border-radius: 4px;
-            font-size: 16px;
+            font-size: 14px;        /* Opcional: Ajusta el tamaño del texto */
             border: none;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
+        
         .add-product-button:hover {
             background-color: #bc3813;
         }
@@ -445,19 +506,4 @@ table {
         .tabla-productos th, .tabla-productos td {
             padding: 8px;
             text-align: center;
-        }
-        .boton-agregar {
-            display: block;
-            margin: 10px auto;
-            padding: 10px 20px;
-            background-color: #e45404;
-            color: #fff;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 5px;
-            text-decoration: none;
-            width: fit-content;
-        }
-        .boton-agregar:hover {
-            background-color: #003d82;
         }
