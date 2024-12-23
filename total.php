@@ -144,7 +144,7 @@ if ($result_total) {
         echo "<tr><td colspan='7' style='text-align:right; font-weight:bold;'>Total del Día:</td><td>$" . number_format($daily_total, 2) . "</td></tr>";
         echo "</table><br>";
     } else {
-        echo "No hay pedidos completados para este cliente.<br>";
+        echo "";
     }
     $result_total->free();
 } else {
