@@ -44,6 +44,7 @@ echo "<meta charset='UTF-8'>";
 echo "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
 echo "<title>Bienvenido</title>";
 echo "<link rel='icon' href='images/icon.png'>";
+echo "<link rel='icon' type='image/x-icon' href='images/icono.ico'>";
 echo "<link rel='stylesheet' href='style/inicio.css'>";
 echo "<link rel='stylesheet' href='style/navbar.css'>";
 echo "<link rel='stylesheet' href='style/ayuda.css'>";
@@ -66,8 +67,11 @@ echo "<h1>¡Bienvenido, " . htmlspecialchars($_SESSION['username']) . "! 🍕</h
 # CONSULTAR PEDIDOS
 $sql_pedidos = "SELECT c.idClientes, c.Nombre AS Cliente, c.Apellido, c.Telefono, 
                         pr.Nombre AS Producto, p.Cantidad, pr.Precio, p.FechaPedido, 
-                        p.Fecha_Entrega, p.idPedidos, (p.Cantidad * pr.Precio) AS PrecioTotalProducto, 
-                        p.Reservado
+                        p.Fecha_Entrega, p.idPedidos, p.mitades, p.Reservado,
+                        CASE 
+                            WHEN p.mitades = 1 THEN (p.Cantidad * pr.Precio * 0.5)
+                            ELSE (p.Cantidad * pr.Precio)
+                        END AS PrecioTotalProducto
                 FROM Pedidos p
                 JOIN Clientes c ON p.idClientes = c.idClientes
                 JOIN Productos pr ON p.idProductos = pr.idProductos
@@ -107,7 +111,7 @@ if ($result_pedidos->num_rows > 0) {
 
 
 # MOSTRAR PEDIDOS NORMALES
-# Mostrar tabla de pedidos normales
+
 echo "<h2>Pedidos Agrupados por Clientes</h2>";
 if (count($pedidosNormales) > 0) {
     echo "<table class='tabla-pedidos' border='0'>";
@@ -116,9 +120,10 @@ if (count($pedidosNormales) > 0) {
         echo "<tr><th>Producto</th><th>Cantidad</th><th>Precio Total</th><th>Fecha de Pedido</th><th>Acciones</th></tr>";
         foreach ($data['pedidos'] as $pedido) {
             echo "<tr>";
-            echo "<td>" . htmlspecialchars($pedido['Producto']) . "</td>";
+            echo "<td>" . htmlspecialchars($pedido['Producto']) . 
+                (isset($pedido['mitades']) && $pedido['mitades'] == 1 ? " (Mitad)" : "") . "</td>";
             echo "<td>" . htmlspecialchars($pedido['Cantidad']) . "</td>";
-            echo "<td>" . number_format($pedido['PrecioTotalProducto'], 2) . "</td>";
+            echo "<td>$" . number_format($pedido['PrecioTotalProducto'], 2) . "</td>";
             echo "<td>" . htmlspecialchars($pedido['FechaPedido']) . "</td>";
             echo "<td>";
             echo "<form method='POST' action='completar.php' style='display:inline-block;'>";
@@ -152,9 +157,10 @@ if (count($pedidosReservados) > 0) {
         echo "<tr><th>Producto</th><th>Cantidad</th><th>Precio Total</th><th>Fecha y Hora de Entrega</th><th>Acciones</th></tr>";
         foreach ($data['pedidos'] as $pedido) {
             echo "<tr>";
-            echo "<td>" . htmlspecialchars($pedido['Producto']) . "</td>";
+            echo "<td>" . htmlspecialchars($pedido['Producto']) . 
+                (isset($pedido['mitades']) && $pedido['mitades'] == 1 ? " (Mitad)" : "") . "</td>";
             echo "<td>" . htmlspecialchars($pedido['Cantidad']) . "</td>";
-            echo "<td>" . number_format($pedido['PrecioTotalProducto'], 2) . "</td>";
+            echo "<td>$" . number_format($pedido['PrecioTotalProducto'], 2) . "</td>";
             $fechaEntrega = !empty($pedido['Fecha_Entrega']) ? date('d/m/Y H:i', strtotime($pedido['Fecha_Entrega'])) : 'No especificada';
             echo "<td>" . htmlspecialchars($fechaEntrega) . "</td>";
             echo "<td>";
