@@ -1,23 +1,21 @@
 <?php
+#Conexión y preparación de datos
 include("conexion.php");
 
-#verificar la conexión
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
 
-#obtener la fecha actual para usarla en el campo de reserva
 $fechaActual = date("Y-m-d");
 
-#verificar si se envió un pedido
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset($_POST['nombreCliente']) && isset($_POST['apellidoCliente']) && isset($_POST['telefono'])) {
     $productos = $_POST['productos'];
     $cantidades = $_POST['cantidades'];
+    $mitades = isset($_POST['mitades']) ? $_POST['mitades'] : [];
     $nombreCliente = $_POST['nombreCliente'];
     $apellidoCliente = $_POST['apellidoCliente'];
     $telefono = $_POST['telefono'];
 
-    #stablecer si el pedido es una reserva
     $esReserva = isset($_POST['reserva']) && $_POST['reserva'] == '1' ? 1 : 0;
     $fechaEntrega = null;
 
@@ -25,7 +23,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
         $fechaEntrega = $_POST['fecha_entrega'] . ' ' . $_POST['hora_entrega'] . ':00';
     }
 
-    #verificar si el cliente ya existe
     $sql_cliente = "SELECT idClientes FROM Clientes WHERE Nombre = ? AND Apellido = ? AND Telefono = ?";
     $stmt_cliente = $conn->prepare($sql_cliente);
     $stmt_cliente->bind_param("sss", $nombreCliente, $apellidoCliente, $telefono);
@@ -36,7 +33,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
         $row_cliente = $result_cliente->fetch_assoc();
         $idCliente = $row_cliente['idClientes'];
     } else {
-        #Insertar nuevo cliente si no existe
         $sql_insert_cliente = "INSERT INTO Clientes (Nombre, Apellido, Telefono) VALUES (?, ?, ?)";
         $stmt_insert_cliente = $conn->prepare($sql_insert_cliente);
         $stmt_insert_cliente->bind_param("sss", $nombreCliente, $apellidoCliente, $telefono);
@@ -47,33 +43,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
         }
     }
 
-    #Insertar pedidos en la base de datos
     foreach ($productos as $idProducto) {
         $cantidad = intval($cantidades[$idProducto]);
-        if ($cantidad < 1) {
-            $cantidad = 1; #Asegurar que la cantidad mínima es 1
+    
+        #Obtener el precio base del producto
+        $sql_precio = "SELECT Precio FROM Productos WHERE idProductos = ?";
+        $stmt_precio = $conn->prepare($sql_precio);
+        $stmt_precio->bind_param("i", $idProducto);
+        $stmt_precio->execute();
+        $result_precio = $stmt_precio->get_result();
+        $row_precio = $result_precio->fetch_assoc();
+        $precio = $row_precio['Precio'];
+    
+        #Determinar si es mitad
+        $esMitad = in_array($idProducto, $mitades) ? 1 : 0;
+    
+        #Aplicar descuento si es mitad
+        if ($esMitad) {
+            $precio = $precio * 0.5;
         }
-
-        $sql_insert_pedido = "INSERT INTO Pedidos (idProductos, idClientes, Cantidad, Reservado, Fecha_Entrega) VALUES (?, ?, ?, ?, ?)";
+    
+        #Calcular el precio total
+        $preciototal = $precio * $cantidad;
+    
+        #Insertar el pedido con el campo mitades
+        $sql_insert_pedido = "INSERT INTO Pedidos (idProductos, idClientes, Cantidad, Reservado, Fecha_Entrega, PrecioTotal, Mitades) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt_insert_pedido = $conn->prepare($sql_insert_pedido);
-        $stmt_insert_pedido->bind_param("iiiss", $idProducto, $idCliente, $cantidad, $esReserva, $fechaEntrega);
-
+        $stmt_insert_pedido->bind_param("iiiisdi", $idProducto, $idCliente, $cantidad, $esReserva, $fechaEntrega, $preciototal, $esMitad);
+    
         if (!$stmt_insert_pedido->execute()) {
             die("Error al agregar el pedido: " . $conn->error);
         }
     }
+    
 
-    #Redirigir al inicio después de completar los pedidos
     header("Location: inicio.php");
     exit();
 }
 
-# Consulta para obtener los productos
 $sql_productos = "SELECT * FROM Productos";
 $result_productos = $conn->query($sql_productos);
-$sql_clientes = "SELECT Nombre, Apellido, Telefono 
-                FROM Clientes 
-                ORDER BY Nombre ASC";
+$sql_clientes = "SELECT Nombre, Apellido, Telefono FROM Clientes ORDER BY Nombre ASC";
 $result_clientes = $conn->query($sql_clientes);
 
 $productos = [];
@@ -86,7 +96,6 @@ if ($result_productos->num_rows > 0) {
 
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="es">
@@ -192,16 +201,16 @@ $conn->close();
     <div class="form-group">
         <label for="nombreCliente">Nombre del Cliente:</label>
         <input type="text" id="nombreCliente" name="nombreCliente" required 
-               pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos" 
-               list="clientes_sugeridos"
-               oninput="let [nombre, apellido, tel] = this.value.split(' | '); 
-                       this.value = nombre || '';
-                       document.getElementById('apellidoCliente').value = apellido || '';
-                       document.getElementById('telefono').value = tel || '';"><br><br>
+                pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos" 
+                list="clientes_sugeridos"
+                oninput="let [nombre, apellido, tel] = this.value.split(' | '); 
+                        this.value = nombre || '';
+                        document.getElementById('apellidoCliente').value = apellido || '';
+                        document.getElementById('telefono').value = tel || '';"><br><br>
         
         <label for="apellidoCliente">Apellido del Cliente:</label>
         <input type="text" id="apellidoCliente" name="apellidoCliente" required 
-               pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos"><br><br>
+                pattern="[A-Za-z\s]+" title="Solo letras y espacios permitidos"><br><br>
         
         <datalist id="clientes_sugeridos">
             <?php while ($row = $result_clientes->fetch_assoc()): ?>
@@ -211,7 +220,7 @@ $conn->close();
         
         <label for="telefono">Teléfono del Cliente:</label>
         <input type="tel" id="telefono" name="telefono" required 
-               title="Ingrese un número telefónico">
+                title="Ingrese un número telefónico">
     </div>
 
     <div class="form-group">
@@ -221,37 +230,42 @@ $conn->close();
                 <img src="images/<?php echo strtolower($categoria); ?>.png" alt="<?php echo $categoria; ?>" class="categoria-imagen">
                 <div class="categoria-items">
                     <?php foreach ($items as $producto): ?>
-                        <label>
-                            <input type="checkbox" name="productos[]" value="<?php echo $producto['idProductos']; ?>">
-                            <?php echo $producto['Nombre']; ?>
-                        </label>
-                        <label for="cantidad_<?php echo $producto['idProductos']; ?>">Cantidad:</label>
-                        <input type="number" id="cantidad_<?php echo $producto['idProductos']; ?>" 
-                            name="cantidades[<?php echo $producto['idProductos']; ?>]" value="1" min="1">
-                        <br>
+                        <div class="producto-item">
+                            <label>
+                                <input type="checkbox" name="productos[]" value="<?php echo $producto['idProductos']; ?>">
+                                <?php echo $producto['Nombre']; ?>
+                            </label>
+                            <label for="cantidad_<?php echo $producto['idProductos']; ?>">Cantidad:</label>
+                            <input type="number" id="cantidad_<?php echo $producto['idProductos']; ?>" 
+                                    name="cantidades[<?php echo $producto['idProductos']; ?>]" value="1" min="1">
+                            <label>
+                                <input type="checkbox" name="mitades[]" value="<?php echo $producto['idProductos']; ?>">
+                                Mitad
+                            </label>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>
         <?php endforeach; ?>
     </div>
 
+
+    
     <div class="form-group">
-    <label for="reserva">¿Es una reserva?</label>
-    <input type="checkbox" id="reserva" name="reserva" value="1">
-    <div id="fecha-entrega-group">
-        <label for="fecha_entrega">Fecha de Entrega:</label>
-        <input type="date" id="fecha_entrega" name="fecha_entrega" min="<?php echo $fechaActual; ?>">
-        <br>
-        <label for="hora_entrega">Hora de Entrega:</label>
-        <input type="time" id="hora_entrega" name="hora_entrega" min="18:00" max="01:00">
-        <small>(Horario disponible: 18:00 a 01:00 Horas)</small>
+        <label for="reserva">¿Es una reserva?</label>
+        <input type="checkbox" id="reserva" name="reserva" value="1">
+        <div id="fecha-entrega-group">
+            <label for="fecha_entrega">Fecha de Entrega:</label>
+            <input type="date" id="fecha_entrega" name="fecha_entrega" min="<?php echo $fechaActual; ?>">
+            <br>
+            <label for="hora_entrega">Hora de Entrega:</label>
+            <input type="time" id="hora_entrega" name="hora_entrega" min="18:00" max="01:00">
+            <small>(Horario disponible: 18:00 a 01:00 Horas)</small>
+        </div>
     </div>
-</div>
 
     <input type="submit" value="Completar Pedido">
 </form>
-
-
 
 <div class='navbar'>
     <a href='inicio.php'>Inicio</a>
