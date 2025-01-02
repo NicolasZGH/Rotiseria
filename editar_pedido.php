@@ -45,7 +45,8 @@ include("conexion.php");
             font-weight: bold;
         }
         input[type="text"],
-        input[type="number"] {
+        input[type="number"],
+        select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -60,6 +61,7 @@ include("conexion.php");
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #bc3813;
@@ -76,19 +78,35 @@ include("conexion.php");
             border-radius: 4px;
             box-sizing: border-box;
             background-color: white;
-            appearance: none; /* Oculta el ícono de flecha predeterminado en algunos navegadores */
-            -webkit-appearance: none; /* Oculta el ícono de flecha en Safari */
-            -moz-appearance: none; /* Oculta el ícono de flecha en Firefox */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
             font-size: 1rem;
         }
 
-/* Estilos opcionales para agregar un ícono de flecha personalizado */
         .form-select {
             background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down"><polyline points="6 9 12 15 18 9"></polyline></svg>');
             background-repeat: no-repeat;
             background-position: right 10px center;
             background-size: 1em;
         }
+
+        .mitad-checkbox {
+    margin-top: 10px; /* Ajusta este valor si deseas más separación */
+        }
+
+        .mitad-checkbox input[type="checkbox"] {
+            transform: scale(1.5); /* Mantiene el tamaño */
+            margin-left: -200px; /* Ajusta la posición horizontal del checkbox */
+        }
+
+        .mitad-checkbox label {
+            display: block; /* Hace que el texto quede en la parte superior */
+            margin-bottom: 5px; /* Espacio entre el texto y el checkbox */
+        }
+
+
+        
 
     </style>
 
@@ -98,12 +116,13 @@ include("conexion.php");
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['pedido_id'])) {
             $pedido_id = $_POST['pedido_id'];
 
-            // Consultar datos actuales del pedido
-            $sql_pedido = "SELECT p.idPedidos, c.Nombre AS Cliente, pr.idProductos, pr.Nombre AS Producto, pr.Precio, p.Cantidad 
-                           FROM Pedidos p
-                           JOIN Clientes c ON p.idClientes = c.idClientes
-                           JOIN Productos pr ON p.idProductos = pr.idProductos
-                           WHERE p.idPedidos = ?";
+            #Consultar datos actuales del pedido
+            $sql_pedido = "SELECT p.idPedidos, c.Nombre AS Cliente, pr.idProductos, pr.Nombre AS Producto, 
+                            pr.Precio, p.Cantidad, p.mitades 
+                            FROM Pedidos p
+                            JOIN Clientes c ON p.idClientes = c.idClientes
+                            JOIN Productos pr ON p.idProductos = pr.idProductos
+                            WHERE p.idPedidos = ?";
             $stmt = $conn->prepare($sql_pedido);
             $stmt->bind_param("i", $pedido_id);
             $stmt->execute();
@@ -112,11 +131,10 @@ include("conexion.php");
             if ($result->num_rows > 0) {
                 $pedido = $result->fetch_assoc();
 
-                // Obtener todos los productos para la lista desplegable
+                #Obtener todos los productos para la lista desplegable
                 $productos_result = $conn->query("SELECT idProductos, Nombre, Precio FROM Productos");
                 ?>
 
-                <!-- Formulario de edición -->
                 <form method="POST" action="guardar_edicion_pedido.php" class="edit-form">
                     <input type="hidden" name="pedido_id" value="<?php echo $pedido['idPedidos']; ?>">
 
@@ -131,8 +149,8 @@ include("conexion.php");
                             <option value="">Seleccione un producto</option>
                             <?php while ($producto = $productos_result->fetch_assoc()) { ?>
                                 <option value="<?php echo $producto['idProductos']; ?>" 
-                                    data-precio="<?php echo $producto['Precio']; ?>" 
-                                    <?php if ($producto['idProductos'] == $pedido['idProductos']) echo 'selected'; ?>>
+                                        data-precio="<?php echo $producto['Precio']; ?>" 
+                                        <?php if ($producto['idProductos'] == $pedido['idProductos']) echo 'selected'; ?>>
                                     <?php echo $producto['Nombre']; ?>
                                 </option>
                             <?php } ?>
@@ -141,17 +159,23 @@ include("conexion.php");
 
                     <div class="form-group">
                         <label for="cantidad">Cantidad:</label>
-                        <input type="number" id="cantidad" name="cantidad" value="<?php echo $pedido['Cantidad']; ?>" required oninput="actualizarPrecio()">
+                        <input type="number" id="cantidad" name="cantidad" value="<?php echo $pedido['Cantidad']; ?>" required min="1" oninput="actualizarPrecio()">
+                    </div>
+
+                    <div class="form-group mitad-checkbox">
+                        <label for="mitad">¿Es mitad?</label>
+                        <input type="checkbox" id="mitad" name="mitad" value="1" <?php echo ($pedido['mitades'] == 1) ? 'checked' : ''; ?> onchange="actualizarPrecio()">
                     </div>
 
                     <div class="form-group">
                         <label for="total">Total:</label>
-                        <input type="text" id="total" name="total" value="<?php echo $pedido['Cantidad'] * $pedido['Precio']; ?>" readonly>
+                        <input type="text" id="total" name="total" readonly>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                    <a href="inicio.php" class="btn btn-secondary" style="background-color: #888; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center;">Cancelar</a>
-
+                    <button type="submit">Guardar Cambios</button>
+                    <a href="inicio.php" style="text-decoration: none;">
+                        <button type="button" style="background-color: #888;">Cancelar</button>
+                    </a>
                 </form>
 
                 <script>
@@ -159,8 +183,19 @@ include("conexion.php");
                         let productoSelect = document.getElementById("producto");
                         let precio = parseFloat(productoSelect.options[productoSelect.selectedIndex].getAttribute("data-precio"));
                         let cantidad = parseFloat(document.getElementById("cantidad").value);
-                        document.getElementById("total").value = (precio * cantidad).toFixed(2);
+                        let esMitad = document.getElementById("mitad").checked;
+
+                        //si es mitad, aplicar 50% de descuento
+                        if (esMitad) {
+                            precio = precio * 0.5;
+                        }
+
+                        let total = precio * cantidad;
+                        document.getElementById("total").value = total.toFixed(2);
                     }
+
+                    //calcular el precio inicial cuando se carga la página
+                    window.onload = actualizarPrecio;
                 </script>
 
                 <?php
