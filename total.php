@@ -58,52 +58,56 @@ echo "<form method='GET' action='total.php'>";
 echo "<label for='cliente' style='margin-right: 0.5rem;'>Buscar pedidos por cliente:</label>";
 echo "<input type='text' id='cliente' name='cliente' placeholder='Nombre del cliente' style='padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; width: 200px;'>";
 echo "<button type='submit' style='padding: 0.5rem 1rem; background-color: #e64e08; color: #fff; border: none; border-radius: 0.25rem; cursor: pointer;'>Buscar</button>";
-#botón "Volver" que redirige a la misma página sin parámetros de búsqueda
 echo "<button href='total.php' style='padding: 0.5rem 1rem; background-color: #333; color: #fff; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem; margin-left: 0.5rem;'>Volver</button>";
 echo "</form>";
 echo "</div>";
 
-
+# Construir la consulta SQL base
+$sql_base = "SELECT 
+    DATE(t.FechaPedido) AS Fecha, 
+    t.idTotal, 
+    t.FechaPedido, 
+    c.Nombre AS Cliente, 
+    c.DNI AS DNICliente, 
+    prod.Nombre AS Producto, 
+    t.Cantidad, 
+    t.mitades,
+    CASE 
+        WHEN t.mitades = 1 THEN prod.Precio / 2
+        ELSE prod.Precio 
+    END AS PrecioUnitario,
+    CASE 
+        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+        ELSE (t.Cantidad * prod.Precio)
+    END AS PrecioTotal
+FROM Total t 
+INNER JOIN Clientes c ON t.idClientes = c.idClientes
+INNER JOIN Productos prod ON t.idProductos = prod.idProductos";
 
 #verificar si se ingresó un nombre de cliente en el formulario de búsqueda
 if (isset($_GET['cliente']) && !empty($_GET['cliente'])) {
-    $cliente = "%" . $_GET['cliente'] . "%"; #añadir comodines para búsqueda parcial
-    $sql_total = "SELECT DATE(t.FechaPedido) AS Fecha, t.idTotal, t.FechaPedido, c.Nombre AS Cliente, c.DNI AS DNICliente, 
-                  prod.Nombre AS Producto, t.Cantidad, prod.Precio, (t.Cantidad * prod.Precio) AS PrecioTotal
-                    FROM Total t 
-                    INNER JOIN Clientes c ON t.idClientes = c.idClientes
-                    INNER JOIN Productos prod ON t.idProductos = prod.idProductos
-                    WHERE c.Nombre LIKE ?
-                    ORDER BY t.FechaPedido DESC";
+    $cliente = "%" . $_GET['cliente'] . "%";
+    $sql_total = $sql_base . " WHERE c.Nombre LIKE ? ORDER BY t.FechaPedido DESC";
     $stmt = $conn->prepare($sql_total);
     $stmt->bind_param("s", $cliente);
     $stmt->execute();
     $result_total = $stmt->get_result();
 } else {
-    #mostrar todos los pedidos si no se busca un cliente específico
-    $sql_total = "SELECT DATE(t.FechaPedido) AS Fecha, t.idTotal, t.FechaPedido, c.Nombre AS Cliente, c.DNI AS DNICliente, 
-                  prod.Nombre AS Producto, t.Cantidad, prod.Precio, (t.Cantidad * prod.Precio) AS PrecioTotal
-                    FROM Total t 
-                    INNER JOIN Clientes c ON t.idClientes = c.idClientes
-                    INNER JOIN Productos prod ON t.idProductos = prod.idProductos
-                    ORDER BY t.FechaPedido DESC";
+    $sql_total = $sql_base . " ORDER BY t.FechaPedido DESC";
     $result_total = $conn->query($sql_total);
 }
 
 #continuar mostrando la tabla de pedidos
 if ($result_total) {
     $current_date = null;
-    $daily_total = 0;  #Variable para almacenar el total de cada día
+    $daily_total = 0;
     if ($result_total->num_rows > 0) {
         while ($row = $result_total->fetch_assoc()) {
-            #Detectar un cambio de día
             if ($current_date !== $row["Fecha"]) {
                 if ($current_date !== null) {
-                    #Mostrar el total del día anterior antes de cerrar la tabla
                     echo "<tr><td colspan='7' style='text-align:right; font-weight:bold;'>Total del Día:</td><td>$" . number_format($daily_total, 2) . "</td></tr>";
                     echo "</table><br>";
                 }
-                #Actualizar la fecha actual y abrir una nueva tabla con estilo reducido
                 $current_date = $row["Fecha"];
                 echo "<h2>Pedidos del " . $current_date . "</h2>";
                 echo "<table style='width: 80%; font-size: 0.9em;'>
@@ -117,21 +121,24 @@ if ($result_total) {
                         <th>Precio Total</th>
                         <th>Acciones</th>
                     </tr>";
-                #Reiniciar el total diario para el nuevo día
                 $daily_total = 0;
             }
-            #Sumar el precio total de cada pedido al total del día
+            
             $daily_total += $row["PrecioTotal"];
             
-            #Mostrar fila del pedido
+            $producto_nombre = $row["Producto"];
+            if ($row["mitades"] == 1) {
+                $producto_nombre .= " (Mitad)";
+            }
+            
             echo "<tr>
                     <td>" . $row["FechaPedido"] . "</td>
                     <td>" . $row["Cliente"] . "</td>
                     <td>" . $row["DNICliente"] . "</td>
-                    <td>" . $row["Producto"] . "</td>
+                    <td>" . $producto_nombre . "</td>
                     <td>" . $row["Cantidad"] . "</td>
-                    <td>" . $row["Precio"] . "</td>
-                    <td>" . $row["PrecioTotal"] . "</td>
+                    <td>$" . number_format($row["PrecioUnitario"], 2) . "</td>
+                    <td>$" . number_format($row["PrecioTotal"], 2) . "</td>
                     <td>
                         <form method='POST' action='total.php' style='display:inline-block;'>
                             <input type='hidden' name='idTotal' value='" . $row["idTotal"] . "'>
@@ -140,7 +147,6 @@ if ($result_total) {
                     </td>
                 </tr>";
         }
-        #Mostrar el total del último día
         echo "<tr><td colspan='7' style='text-align:right; font-weight:bold;'>Total del Día:</td><td>$" . number_format($daily_total, 2) . "</td></tr>";
         echo "</table><br>";
     } else {
@@ -152,7 +158,12 @@ if ($result_total) {
 }
 
 #Calcular y mostrar el total general de todos los pedidos
-$sql_suma_total = "SELECT SUM(t.Cantidad * prod.Precio) AS SumaTotal
+$sql_suma_total = "SELECT SUM(
+                    CASE 
+                        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+                        ELSE (t.Cantidad * prod.Precio)
+                    END
+                    ) AS SumaTotal
                     FROM Total t
                     INNER JOIN Productos prod ON t.idProductos = prod.idProductos";
 $result_suma_total = $conn->query($sql_suma_total);
