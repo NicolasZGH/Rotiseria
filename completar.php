@@ -14,18 +14,27 @@ if (isset($_POST['transferir_pedido'])) {
     $conn->autocommit(FALSE);
 
     try {
-        // Obtener los datos del pedido
-        $sql_pedido = "SELECT idClientes, idProductos, Cantidad, FechaPedido FROM Pedidos WHERE idPedidos = ?";
+        // Obtener los datos del pedido incluyendo el campo mitades
+        $sql_pedido = "SELECT idClientes, idProductos, Cantidad, FechaPedido, mitades 
+                        FROM Pedidos 
+                        WHERE idPedidos = ?";
         $stmt = $conn->prepare($sql_pedido);
         $stmt->bind_param("i", $pedido_id);
         $stmt->execute();
         $result = $stmt->get_result();
         $pedido = $result->fetch_assoc();
 
-        // Insertar en la tabla Total
-        $sql_insertar = "INSERT INTO Total (idClientes, idProductos, Cantidad, FechaPedido) VALUES (?, ?, ?, ?)";
+        // Insertar en la tabla Total incluyendo el campo mitades
+        $sql_insertar = "INSERT INTO Total (idClientes, idProductos, Cantidad, FechaPedido, mitades) 
+                        VALUES (?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql_insertar);
-        $stmt->bind_param("iiis", $pedido['idClientes'], $pedido['idProductos'], $pedido['Cantidad'], $pedido['FechaPedido']);
+        $stmt->bind_param("iiisi", 
+            $pedido['idClientes'], 
+            $pedido['idProductos'], 
+            $pedido['Cantidad'], 
+            $pedido['FechaPedido'],
+            $pedido['mitades']
+        );
         $stmt->execute();
 
         // Eliminar de la tabla Pedidos
