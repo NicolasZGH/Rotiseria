@@ -55,12 +55,33 @@ echo "<h1>Total de Pedidos</h1>";
 #formulario de búsqueda de pedidos por cliente
 echo "<div class='busqueda-cliente' style='background-color: #f2f2f2; padding: 1rem; border-radius: 0.5rem;'>";
 echo "<form method='GET' action='total.php'>";
-echo "<label for='cliente' style='margin-right: 0.5rem;'>Buscar pedidos por cliente:</label>";
+echo "<label for='cliente' style='margin-right: 0.5rem;'>Buscar</label><br>";
+echo "<label for='cliente' style='margin-right: 0.5rem;'>pedidos por cliente:</label>";
 echo "<input type='text' id='cliente' name='cliente' placeholder='Nombre del cliente' style='padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; width: 200px;'>";
-echo "<button type='submit' style='padding: 0.5rem 1rem; background-color: #e64e08; color: #fff; border: none; border-radius: 0.25rem; cursor: pointer;'>Buscar</button>";
+echo "<button type='submit' style='padding: 0.5rem 1rem; background-color: #e64e08; color: #fff; border: none; border-radius: 0.25rem; cursor: pointer; margin-left: 0.5rem;'>Buscar</button>";
 echo "<button href='total.php' style='padding: 0.5rem 1rem; background-color: #333; color: #fff; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem; margin-left: 0.5rem;'>Volver</button>";
 echo "</form>";
 echo "</div>";
+
+#Calcular y mostrar el total general de todos los pedidos
+$sql_suma_total = "SELECT SUM(
+    CASE 
+        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+        ELSE (t.Cantidad * prod.Precio)
+    END
+    ) AS SumaTotal
+    FROM Total t
+    INNER JOIN Productos prod ON t.idProductos = prod.idProductos";
+$result_suma_total = $conn->query($sql_suma_total);
+
+if ($result_suma_total) {
+$row_suma_total = $result_suma_total->fetch_assoc();
+$total_general = $row_suma_total['SumaTotal'];
+echo "<h2>Total de todos los pedidos: $" . number_format($total_general, 2) . "</h2>";
+$result_suma_total->free();
+} else {
+echo "Error al calcular el total general: " . $conn->error . "<br>";
+}
 
 # Construir la consulta SQL base
 $sql_base = "SELECT 
@@ -103,14 +124,14 @@ if ($result_total) {
     $daily_total = 0;
     if ($result_total->num_rows > 0) {
         while ($row = $result_total->fetch_assoc()) {
-            if ($current_date !== $row["Fecha"]) {
+            if ($current_date !== date("d/m/Y", strtotime($row["Fecha"]))) {
                 if ($current_date !== null) {
                     echo "<tr><td colspan='7' style='text-align:right; font-weight:bold;'>Total del Día:</td><td>$" . number_format($daily_total, 2) . "</td></tr>";
                     echo "</table><br>";
                 }
-                $current_date = $row["Fecha"];
-                echo "<h2>Pedidos del " . $current_date . "</h2>";
-                echo "<table style='width: 80%; font-size: 0.9em;'>
+                $current_date = date("d/m/Y", strtotime($row["Fecha"]));
+                echo "<h3>Pedidos del " . $current_date . "</h3>";
+                echo "<table style='width: 60%; font-size: 1.0em;'>
                     <tr>
                         <th>Fecha</th>
                         <th>Cliente</th>
@@ -132,7 +153,7 @@ if ($result_total) {
             }
             
             echo "<tr>
-                    <td>" . $row["FechaPedido"] . "</td>
+                    <td>" . date("d/m/Y", strtotime($row["FechaPedido"])) . "</td>
                     <td>" . $row["Cliente"] . "</td>
                     <td>" . $row["DNICliente"] . "</td>
                     <td>" . $producto_nombre . "</td>
@@ -157,27 +178,10 @@ if ($result_total) {
     echo "Error en la consulta de total de pedidos: " . $conn->error . "<br>";
 }
 
-#Calcular y mostrar el total general de todos los pedidos
-$sql_suma_total = "SELECT SUM(
-                    CASE 
-                        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
-                        ELSE (t.Cantidad * prod.Precio)
-                    END
-                    ) AS SumaTotal
-                    FROM Total t
-                    INNER JOIN Productos prod ON t.idProductos = prod.idProductos";
-$result_suma_total = $conn->query($sql_suma_total);
 
-if ($result_suma_total) {
-    $row_suma_total = $result_suma_total->fetch_assoc();
-    $total_general = $row_suma_total['SumaTotal'];
-    echo "<h2>Total de Todos los Pedidos: $" . number_format($total_general, 2) . "</h2>";
-    $result_suma_total->free();
-} else {
-    echo "Error al calcular el total general: " . $conn->error . "<br>";
-}
 
 echo "</div>"; 
+echo "<div style='height: 50px;'></div>";
 echo "</body>";
 echo "</html>";
 ?>
