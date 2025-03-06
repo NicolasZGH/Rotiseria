@@ -507,3 +507,7 @@ table {
             padding: 8px;
             text-align: center;
         }
+
+body {
+    padding-bottom: 60px;
+}
