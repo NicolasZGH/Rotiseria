@@ -108,7 +108,94 @@ if ($result_pedidos->num_rows > 0) {
     }
 }
 
+# BUSCADOR DE PEDIDOS
+echo "<div style='display: flex; justify-content: center; margin-bottom: 1rem;'>";
+echo "<div class='busqueda-cliente' style='background-color: #f2f2f2; padding: 1rem; border-radius: 0.5rem; width: 500px;'>";
+echo "<form method='GET' action='inicio.php' style='display: flex; align-items: center;'>";
+echo "<label for='cliente_busqueda' style='margin-right: 0.5rem;'>Buscar cliente:</label>";
+echo "<input type='text' id='cliente_busqueda' name='cliente_busqueda' placeholder='Nombre del cliente' style='padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; width: 200px; font-size: 0.9rem;'>";
+echo "<button type='submit' style='padding: 0.5rem 1rem; background-color: #e64e08; color: #fff; border: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem; margin-left: 0.5rem;'>Buscar</button>";
+echo "<a href='inicio.php' style='padding: 0.6rem 1rem; background-color: #333; color: #fff; text-decoration: none; border-radius: 0.25rem; cursor: pointer; font-size: 0.9rem; margin-top: revert;'>Volver</a>";
+echo "</form>";
+echo "</div>";
+echo "</div>";
 
+# PROCESAR BÚSQUEDA
+$filtro_cliente = isset($_GET['cliente_busqueda']) && !empty($_GET['cliente_busqueda']) ? $_GET['cliente_busqueda'] : null;
+
+# CONSULTA DE PEDIDOS CON FILTRO
+$sql_pedidos = "SELECT c.idClientes, c.Nombre AS Cliente, c.Apellido, c.Telefono, 
+                        pr.Nombre AS Producto, p.Cantidad, pr.Precio, p.FechaPedido, 
+                        p.Fecha_Entrega, p.idPedidos, p.mitades, p.Reservado,
+                        CASE 
+                            WHEN p.mitades = 1 THEN (p.Cantidad * pr.Precio * 0.5)
+                            ELSE (p.Cantidad * pr.Precio)
+                        END AS PrecioTotalProducto
+                FROM Pedidos p
+                JOIN Clientes c ON p.idClientes = c.idClientes
+                JOIN Productos pr ON p.idProductos = pr.idProductos";
+
+if ($filtro_cliente) {
+    # Separar términos de búsqueda (por si es nombre y apellido)
+    $terminos = explode(' ', $filtro_cliente);
+    
+    if (count($terminos) > 1) {
+        # Buscar por nombre Y apellido
+        $sql_pedidos .= " WHERE (c.Nombre LIKE ? AND c.Apellido LIKE ?)";
+        $param1 = "%" . $terminos[0] . "%";
+        $param2 = "%" . $terminos[1] . "%";
+    } else {
+        # Buscar por nombre O apellido
+        $sql_pedidos .= " WHERE (c.Nombre LIKE ? OR c.Apellido LIKE ?)";
+        $param1 = "%" . $filtro_cliente . "%";
+        $param2 = "%" . $filtro_cliente . "%";
+    }
+}
+
+$sql_pedidos .= " ORDER BY p.FechaPedido DESC";
+
+$pedidosNormales = [];
+$pedidosReservados = [];
+$totalPorClienteNormales = [];
+$totalPorClienteReservados = [];
+
+$stmt = $conn->prepare($sql_pedidos);
+
+if ($filtro_cliente) {
+    if (count($terminos) > 1) {
+        $stmt->bind_param("ss", $param1, $param2);
+    } else {
+        $stmt->bind_param("ss", $param1, $param2);
+    }
+}
+
+$stmt->execute();
+$result_pedidos = $stmt->get_result();
+
+if ($result_pedidos->num_rows > 0) {
+    while ($row = $result_pedidos->fetch_assoc()) {
+        $clienteKey = htmlspecialchars($row['idClientes']); 
+        $clienteVisible = htmlspecialchars($row['Cliente'] . ' ' . $row['Apellido'] . ' (' . $row['Telefono'] . ')');
+
+        if ($row['Reservado'] == 1) {
+            $pedidosReservados[$clienteKey]['cliente'] = $clienteVisible;
+            $pedidosReservados[$clienteKey]['pedidos'][] = $row;
+
+            if (!isset($totalPorClienteReservados[$clienteKey])) {
+                $totalPorClienteReservados[$clienteKey] = 0;
+            }
+            $totalPorClienteReservados[$clienteKey] += $row['PrecioTotalProducto'];
+        } else {
+            $pedidosNormales[$clienteKey]['cliente'] = $clienteVisible;
+            $pedidosNormales[$clienteKey]['pedidos'][] = $row;
+
+            if (!isset($totalPorClienteNormales[$clienteKey])) {
+                $totalPorClienteNormales[$clienteKey] = 0;
+            }
+            $totalPorClienteNormales[$clienteKey] += $row['PrecioTotalProducto'];
+        }
+    }
+}
 
 # MOSTRAR PEDIDOS NORMALES
 
