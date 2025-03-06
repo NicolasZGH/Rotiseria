@@ -8,13 +8,14 @@ if ($conn->connect_error) {
 
 $fechaActual = date("Y-m-d");
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset($_POST['nombreCliente']) && isset($_POST['apellidoCliente']) && isset($_POST['telefono'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset($_POST['nombreCliente']) && isset($_POST['apellidoCliente']) && isset($_POST['telefono']) && isset($_POST['direccion'])) {
     $productos = $_POST['productos'];
     $cantidades = $_POST['cantidades'];
     $mitades = isset($_POST['mitades']) ? $_POST['mitades'] : [];
     $nombreCliente = $_POST['nombreCliente'];
     $apellidoCliente = $_POST['apellidoCliente'];
     $telefono = $_POST['telefono'];
+    $direccion = $_POST['direccion'];
 
     $esReserva = isset($_POST['reserva']) && $_POST['reserva'] == '1' ? 1 : 0;
     $fechaEntrega = null;
@@ -23,9 +24,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
         $fechaEntrega = $_POST['fecha_entrega'] . ' ' . $_POST['hora_entrega'] . ':00';
     }
 
-    $sql_cliente = "SELECT idClientes FROM Clientes WHERE Nombre = ? AND Apellido = ? AND Telefono = ?";
+    $sql_cliente = "SELECT idClientes FROM Clientes WHERE Nombre = ? AND Apellido = ? AND Telefono = ? AND Direccion = ?";
     $stmt_cliente = $conn->prepare($sql_cliente);
-    $stmt_cliente->bind_param("sss", $nombreCliente, $apellidoCliente, $telefono);
+    $stmt_cliente->bind_param("ssss", $nombreCliente, $apellidoCliente, $telefono, $direccion);
     $stmt_cliente->execute();
     $result_cliente = $stmt_cliente->get_result();
 
@@ -33,9 +34,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
         $row_cliente = $result_cliente->fetch_assoc();
         $idCliente = $row_cliente['idClientes'];
     } else {
-        $sql_insert_cliente = "INSERT INTO Clientes (Nombre, Apellido, Telefono) VALUES (?, ?, ?)";
+        $sql_insert_cliente = "INSERT INTO Clientes (Nombre, Apellido, Telefono, Direccion) VALUES (?, ?, ?, ?)";
         $stmt_insert_cliente = $conn->prepare($sql_insert_cliente);
-        $stmt_insert_cliente->bind_param("sss", $nombreCliente, $apellidoCliente, $telefono);
+        $stmt_insert_cliente->bind_param("ssss", $nombreCliente, $apellidoCliente, $telefono, $direccion);
         if ($stmt_insert_cliente->execute()) {
             $idCliente = $stmt_insert_cliente->insert_id;
         } else {
@@ -83,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['productos']) && isset(
 
 $sql_productos = "SELECT * FROM Productos";
 $result_productos = $conn->query($sql_productos);
-$sql_clientes = "SELECT Nombre, Apellido, Telefono FROM Clientes ORDER BY Nombre ASC";
+$sql_clientes = "SELECT Nombre, Apellido, Telefono, Direccion FROM Clientes ORDER BY Nombre ASC";
 $result_clientes = $conn->query($sql_clientes);
 
 $productos = [];
@@ -220,7 +221,11 @@ $conn->close();
         
         <label for="telefono">Teléfono del Cliente:</label>
         <input type="tel" id="telefono" name="telefono" required 
-                title="Ingrese un número telefónico">
+                title="Ingrese un número telefónico"><br><br>
+
+        <label for="">Dirección del Cliente:</label>
+        <input type="dir" id="direccion" name="direccion"
+                title="Ingrese la dirección del cliente">
     </div>
 
     <div class="form-group">
