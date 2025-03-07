@@ -31,7 +31,7 @@ CREATE TABLE `clientes` (
   `Email` varchar(45) DEFAULT NULL,
   `DNI` int(8) DEFAULT NULL,
   PRIMARY KEY (`idClientes`)
-) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=74 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -58,13 +58,15 @@ CREATE TABLE `pedidos` (
   `Cantidad` int(11) NOT NULL,
   `Fecha_Entrega` datetime DEFAULT NULL,
   `reservado` tinyint(1) DEFAULT '0',
+  `Mitades` tinyint(1) DEFAULT '0',
+  `PrecioTotal` float DEFAULT NULL,
   PRIMARY KEY (`idPedidos`),
   KEY `idClientes` (`idClientes`),
   KEY `fk_Pedidos_Productos1` (`idProductos`),
   CONSTRAINT `fk_Pedidos_Productos1` FOREIGN KEY (`idProductos`) REFERENCES `productos` (`idProductos`),
   CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`idProductos`) REFERENCES `productos` (`idProductos`),
   CONSTRAINT `pedidos_ibfk_2` FOREIGN KEY (`idClientes`) REFERENCES `clientes` (`idClientes`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -84,14 +86,14 @@ DROP TABLE IF EXISTS `personas`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `personas` (
-  `Id_Persona` varchar(45) NOT NULL,
-  `Tipo` varchar(45) NOT NULL,
+  `Id_Persona` int(11) NOT NULL AUTO_INCREMENT,
+  `Tipo` varchar(45) DEFAULT NULL,
   `Usuario` varchar(45) NOT NULL,
-  `Clave` int(11) NOT NULL,
+  `Clave` int(45) NOT NULL,
   `Domicilio` varchar(45) DEFAULT NULL,
   `DNI` int(13) NOT NULL,
   PRIMARY KEY (`Id_Persona`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2147483647 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -100,7 +102,7 @@ CREATE TABLE `personas` (
 
 LOCK TABLES `personas` WRITE;
 /*!40000 ALTER TABLE `personas` DISABLE KEYS */;
-INSERT INTO `personas` VALUES ('1','Propietario','admin',1234,'',0);
+INSERT INTO `personas` VALUES (1,'Programador','Nico',12345,'Av. Pte. Peron 843',43932822),(2,'Programador','Mora',1234,'Av. Pte. Peron 845',43932824),(3,'Programador','Ponce',1,'Barrio Norte',12843655),(2147483647,'Prueba','Prueba',1,'Prueba 1',12345678);
 /*!40000 ALTER TABLE `personas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -145,6 +147,7 @@ CREATE TABLE `total` (
   `FechaPedido` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Cantidad` int(11) DEFAULT NULL,
   `Total` int(11) NOT NULL,
+  `Mitades` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`idTotal`),
   KEY `idPedidos` (`idPedidos`),
   KEY `idProductos` (`idProductos`),
@@ -152,7 +155,7 @@ CREATE TABLE `total` (
   CONSTRAINT `total_ibfk_1` FOREIGN KEY (`idPedidos`) REFERENCES `pedidos` (`idPedidos`) ON DELETE CASCADE,
   CONSTRAINT `total_ibfk_2` FOREIGN KEY (`idProductos`) REFERENCES `productos` (`idProductos`) ON DELETE CASCADE,
   CONSTRAINT `total_ibfk_3` FOREIGN KEY (`idClientes`) REFERENCES `clientes` (`idClientes`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -173,4 +176,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-21 14:33:52
+-- Dump completed on 2025-03-07 18:57:45
