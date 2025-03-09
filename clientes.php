@@ -68,6 +68,110 @@ if (isset($_GET['cliente']) && !empty($_GET['cliente'])) {
     $result_clientes = $conn->query($sql_clientes);
 }
 
+
+# Formulario para agregar cliente
+if ($section == 'agregar') {
+    echo "<div class='add-client-form' style='max-width: 600px; margin: 0 auto; background-color: #f2f2f2; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>";
+    echo "<h2 style='text-align: center; color: #333; margin-bottom: 20px;'>Nuevo Cliente</h2>";
+    echo "<form action='clientes.php?section=agregar' method='POST'>";
+    
+    echo "<div style='margin-bottom: 15px;'>";
+    echo "<label for='nombre' style='display: block; margin-bottom: 5px; font-weight: bold;'>Nombre:</label>";
+    echo "<input type='text' name='nombre' required style='width: 97%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>";
+    echo "</div>";
+    
+    echo "<div style='margin-bottom: 15px;'>";
+    echo "<label for='apellido' style='display: block; margin-bottom: 5px; font-weight: bold;'>Apellido:</label>";
+    echo "<input type='text' name='apellido' required style='width: 97%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>";
+    echo "</div>";
+    
+    echo "<div style='margin-bottom: 15px;'>";
+    echo "<label for='email' style='display: block; margin-bottom: 5px; font-weight: bold;'>Email:</label>";
+    echo "<input type='email' name='email' style='width: 97%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>";
+    echo "</div>";
+    
+    echo "<div style='margin-bottom: 15px;'>";
+    echo "<label for='direccion' style='display: block; margin-bottom: 5px; font-weight: bold;'>Dirección:</label>";
+    echo "<input type='text' name='direccion' style='width: 97%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>";
+    echo "</div>";
+    
+    echo "<div style='margin-bottom: 15px;'>";
+    echo "<label for='telefono' style='display: block; margin-bottom: 5px; font-weight: bold;'>Teléfono:</label>";
+    echo "<input type='text' name='telefono' style='width: 97%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>";
+    echo "</div>";
+    
+    echo "<div style='margin-bottom: 20px;'>";
+    echo "<label for='dni' style='display: block; margin-bottom: 5px; font-weight: bold;'>DNI:</label>";
+    echo "<input type='text' name='dni' style='width: 97%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>";
+    echo "</div>";
+    
+    echo "<div style='display: flex; justify-content: space-between;'>";
+    echo "<button type='submit' name='agregar_cliente' style='padding: 10px 20px; background-color: #e4491a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;'>Registrar Cliente</button>";
+    echo "<button type='button' onclick='window.location.href=\"clientes.php?section=clientes\"' style='padding: 10px 20px; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer;'>Cancelar</button>";
+    echo "</div>";
+    
+    echo "</form>";
+    echo "</div>";
+}
+
+echo "<div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;'>";
+if ($section == 'clientes') {
+    echo "<a href='clientes.php?section=agregar' style='display: inline-block; padding: 10px 15px; background-color:  #e4491a; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>+ Agregar Cliente</a>";
+}
+echo "</div>";
+
+# PROCESAR FORMULARIO
+if (isset($_POST['agregar_cliente'])) {
+    $nombre = $_POST['nombre'];
+    $apellido = $_POST['apellido'];
+    $email = isset($_POST['email']) ? $_POST['email'] : '';
+    $direccion = isset($_POST['direccion']) ? $_POST['direccion'] : '';
+    $telefono = isset($_POST['telefono']) ? $_POST['telefono'] : '';
+    $dni = isset($_POST['dni']) ? $_POST['dni'] : '';
+    
+    // Primero verificar si ya existe un cliente con el mismo DNI
+    $sql_check_dni = "SELECT idClientes FROM clientes WHERE DNI = ?";
+    $stmt_check_dni = $conn->prepare($sql_check_dni);
+    $stmt_check_dni->bind_param("s", $dni);
+    $stmt_check_dni->execute();
+    $result_check_dni = $stmt_check_dni->get_result();
+    
+    if ($result_check_dni->num_rows > 0) {
+        // Ya existe un cliente con este DNI
+        echo "<p style='color: red; text-align: center; font-weight: bold;'>Error: Ya existe un cliente registrado con el DNI: " . $dni . "</p>";
+        $stmt_check_dni->close();
+    } else {
+        $stmt_check_dni->close();
+        
+        // Verificar si existe un cliente con el mismo nombre y apellido
+        $sql_check_nombre = "SELECT idClientes FROM clientes WHERE Nombre = ? AND Apellido = ?";
+        $stmt_check_nombre = $conn->prepare($sql_check_nombre);
+        $stmt_check_nombre->bind_param("ss", $nombre, $apellido);
+        $stmt_check_nombre->execute();
+        $result_check_nombre = $stmt_check_nombre->get_result();
+        
+
+            
+            // No hay duplicados, procedemos a insertar
+            $sql_insert_cliente = "INSERT INTO clientes (Nombre, Apellido, Email, Direccion, Telefono, DNI) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt_insert_cliente = $conn->prepare($sql_insert_cliente);
+            $stmt_insert_cliente->bind_param("ssssss", $nombre, $apellido, $email, $direccion, $telefono, $dni);
+            
+            if ($stmt_insert_cliente->execute()) {
+                echo "<p style='color: green; text-align: center; font-weight: bold;'>Cliente agregado correctamente.</p>";
+                // Redirigir después de 2 segundos
+                echo "<script>
+                    setTimeout(function() {
+                        window.location.href = 'clientes.php?section=clientes';
+                    }, 2000);
+                </script>";
+            } else {
+                echo "<p style='color: red; text-align: center; font-weight: bold;'>Error al agregar cliente: " . $conn->error . "</p>";
+            }
+            $stmt_insert_cliente->close();
+        }
+    }
+
 #Sección de Clientes
 if ($section == 'clientes') {
     if ($result_clientes->num_rows > 0) {
