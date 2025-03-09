@@ -63,6 +63,114 @@ echo "<button href='total.php' style='padding: 0.5rem 1rem; background-color: #3
 echo "</form>";
 echo "</div>";
 
+#todos los totales necesarios
+#Total general
+$sql_suma_total = "SELECT SUM(
+    CASE 
+        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+        ELSE (t.Cantidad * prod.Precio)
+    END
+    ) AS SumaTotal
+    FROM Total t
+    INNER JOIN Productos prod ON t.idProductos = prod.idProductos";
+$result_suma_total = $conn->query($sql_suma_total);
+
+#Total por mes (mes actual)
+$sql_mes_actual = "SELECT SUM(
+    CASE 
+        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+        ELSE (t.Cantidad * prod.Precio)
+    END
+    ) AS SumaMes
+    FROM Total t
+    INNER JOIN Productos prod ON t.idProductos = prod.idProductos
+    WHERE MONTH(t.FechaPedido) = MONTH(CURRENT_DATE()) 
+    AND YEAR(t.FechaPedido) = YEAR(CURRENT_DATE())";
+$result_mes = $conn->query($sql_mes_actual);
+
+#Total por semana (semana actual)
+$sql_semana_actual = "SELECT SUM(
+    CASE 
+        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+        ELSE (t.Cantidad * prod.Precio)
+    END
+    ) AS SumaSemana
+    FROM Total t
+    INNER JOIN Productos prod ON t.idProductos = prod.idProductos
+    WHERE YEARWEEK(t.FechaPedido, 1) = YEARWEEK(CURRENT_DATE(), 1)";
+$result_semana = $conn->query($sql_semana_actual);
+
+#Total por día (día actual)
+$sql_dia_actual = "SELECT SUM(
+    CASE 
+        WHEN t.mitades = 1 THEN (t.Cantidad * (prod.Precio / 2))
+        ELSE (t.Cantidad * prod.Precio)
+    END
+    ) AS SumaDia
+    FROM Total t
+    INNER JOIN Productos prod ON t.idProductos = prod.idProductos
+    WHERE DATE(t.FechaPedido) = CURRENT_DATE()";
+$result_dia = $conn->query($sql_dia_actual);
+
+#Preparar los valores
+$total_general = 0;
+$total_mes = 0;
+$total_semana = 0;
+$total_dia = 0;
+
+if ($result_suma_total) {
+    $row_suma_total = $result_suma_total->fetch_assoc();
+    $total_general = $row_suma_total['SumaTotal'] ?: 0;
+    $result_suma_total->free();
+}
+
+if ($result_mes) {
+    $row_mes = $result_mes->fetch_assoc();
+    $total_mes = $row_mes['SumaMes'] ?: 0;
+    $result_mes->free();
+}
+
+if ($result_semana) {
+    $row_semana = $result_semana->fetch_assoc();
+    $total_semana = $row_semana['SumaSemana'] ?: 0;
+    $result_semana->free();
+}
+
+if ($result_dia) {
+    $row_dia = $result_dia->fetch_assoc();
+    $total_dia = $row_dia['SumaDia'] ?: 0;
+    $result_dia->free();
+}
+
+#Contenedor para las cajas de estadísticas 
+echo "<div style='display: flex; flex-wrap: unset; max-width: 500px; gap: 9px; margin: 20px 0;'>";
+
+#Caja para el total general
+echo "<div style='background-color: #f2f2f2; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: calc(50% - 5px);'>";
+echo "<h4 style='margin: 0 0 5px 0; color: #333; font-size: 0.9em;'>Total General</h4>";
+echo "<p style='font-size: 1.2em; font-weight: bold; margin: 0; color: #e64e08;'>$" . number_format($total_general, 2) . "</p>";
+echo "</div>";
+
+#Caja para el total del mes
+echo "<div style='background-color: #f2f2f2; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: calc(50% - 5px);'>";
+echo "<h4 style='margin: 0 0 5px 0; color: #333; font-size: 0.9em;'>Total del Mes</h4>";
+echo "<p style='font-size: 1.2em; font-weight: bold; margin: 0; color: #e64e08;'>$" . number_format($total_mes, 2) . "</p>";
+echo "</div>";
+
+#Caja para el total de la semana
+echo "<div style='background-color: #f2f2f2; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: calc(50% - 5px);'>";
+echo "<h4 style='margin: 0 0 5px 0; color: #333; font-size: 0.9em;'>Total de Semana</h4>";
+echo "<p style='font-size: 1.2em; font-weight: bold; margin: 0; color: #e64e08;'>$" . number_format($total_semana, 2) . "</p>";
+echo "</div>";
+
+#Caja para el total del día
+echo "<div style='background-color: #f2f2f2; padding: 10px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: calc(50% - 5px);'>";
+echo "<h4 style='margin: 0 0 5px 0; color: #333; font-size: 0.9em;'>Total del Día</h4>";
+echo "<p style='font-size: 1.2em; font-weight: bold; margin: 0; color: #e64e08;'>$" . number_format($total_dia, 2) . "</p>";
+echo "</div>";
+
+echo "</div>"; 
+
 #Calcular y mostrar el total general de todos los pedidos
 $sql_suma_total = "SELECT SUM(
     CASE 
@@ -77,7 +185,6 @@ $result_suma_total = $conn->query($sql_suma_total);
 if ($result_suma_total) {
 $row_suma_total = $result_suma_total->fetch_assoc();
 $total_general = $row_suma_total['SumaTotal'];
-echo "<h2>Total de todos los pedidos: $" . number_format($total_general, 2) . "</h2>";
 $result_suma_total->free();
 } else {
 echo "Error al calcular el total general: " . $conn->error . "<br>";
@@ -178,9 +285,6 @@ if ($result_total) {
     echo "Error en la consulta de total de pedidos: " . $conn->error . "<br>";
 }
 
-
-
-echo "</div>"; 
 echo "<div style='height: 50px;'></div>";
 echo "</body>";
 echo "</html>";
