@@ -23,6 +23,11 @@ echo "<title>Clientes</title>";
 echo "<link rel='stylesheet' href='style/inicio.css'>";
 echo "<link rel='stylesheet' href='style/navbar.css'>";
 echo "<link rel='icon' href='images/icon.png'>";
+echo "<script>
+function confirmarEliminacion() {
+    return confirm('¿Está seguro de que desea eliminar este cliente? Esta acción no se puede deshacer.');
+}
+</script>";
 echo "<body>";
 
 #Barra de navegación
@@ -192,7 +197,7 @@ if ($section == 'clientes') {
             echo "<a href='clientes.php?section=editar&cliente_id=" . $row["idClientes"] . "'><button type='button' name='editar_cliente'>Editar</button></a>";
             
             #Botón para eliminar el cliente
-            echo "<form method='POST' style='display:inline-block;'>";
+            echo "<form method='POST' style='display:inline-block;' onsubmit='return confirmarEliminacion()'>";
             echo "<input type='hidden' name='cliente_id' value='" . $row["idClientes"] . "'>";
             echo "<button type='submit' name='eliminar_cliente'>Eliminar</button>";
             echo "</form>";
