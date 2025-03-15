@@ -39,6 +39,11 @@ echo "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
 echo "<title>Total de Pedidos</title>";
 echo "<link rel='stylesheet' href='style/inicio.css'>";
 echo "<link rel='stylesheet' href='style/navbar.css'>";
+echo "<script>
+function confirmarEliminacionPedido() {
+    return confirm('¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.');
+}
+</script>";
 echo "</head>";
 echo "<body>";
 echo "<div class='navbar'>";
@@ -268,7 +273,7 @@ if ($result_total) {
                     <td>$" . number_format($row["PrecioUnitario"], 2) . "</td>
                     <td>$" . number_format($row["PrecioTotal"], 2) . "</td>
                     <td>
-                        <form method='POST' action='total.php' style='display:inline-block;'>
+                        <form method='POST' action='total.php' style='display:inline-block;' onsubmit='return confirmarEliminacionPedido()'>
                             <input type='hidden' name='idTotal' value='" . $row["idTotal"] . "'>
                             <button type='submit' name='eliminar_total'>Eliminar</button>
                         </form>
