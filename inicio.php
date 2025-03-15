@@ -48,6 +48,12 @@ echo "<link rel='icon' type='image/x-icon' href='images/icono.ico'>";
 echo "<link rel='stylesheet' href='style/inicio.css'>";
 echo "<link rel='stylesheet' href='style/navbar.css'>";
 echo "<link rel='stylesheet' href='style/ayuda.css'>";
+echo "<title>Inicio</title>";
+echo "<script>
+    function confirmarEliminacion() {
+    return confirm('¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.');
+}
+</script>";
 echo "</head>";
 echo "<body>";
 
@@ -221,7 +227,7 @@ if (count($pedidosNormales) > 0) {
             echo "<input type='hidden' name='pedido_id' value='" . htmlspecialchars($pedido["idPedidos"]) . "'>";
             echo "<button type='submit' name='editar_pedido'>Editar</button>";
             echo "</form>";
-            echo "<form method='POST' action='eliminar_pedido.php' style='display:inline-block;'>";
+            echo "<form method='POST' action='eliminar_pedido.php' style='display:inline-block;' onsubmit='return confirmarEliminacion();'>";
             echo "<input type='hidden' name='pedido_id' value='" . htmlspecialchars($pedido["idPedidos"]) . "'>";
             echo "<button type='submit' name='eliminar_pedido'>Eliminar</button>";
             echo "</form>";
