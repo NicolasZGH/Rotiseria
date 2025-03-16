@@ -6,7 +6,47 @@ header('Content-Type: text/html; charset=utf-8');
 session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
-    // Código de login existente...
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    if (!preg_match("/^[a-zA-Z]+$/", $username)) {
+        echo "El nombre de usuario solo debe contener letras.";
+        exit();
+    }
+
+    $stmt = $conn->prepare("SELECT * FROM personas WHERE Usuario = ?");
+    if ($stmt === false) {
+        die("Error en prepare: " . $conn->error);
+    }
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 0) {
+        echo "El usuario no existe en la base de datos.";
+        exit();
+    }
+
+    $stmt = $conn->prepare("SELECT * FROM personas WHERE Usuario = ? AND Clave = ?");
+    if ($stmt === false) {
+        die("Error en prepare: " . $conn->error);
+    }
+    $stmt->bind_param("ss", $username, $password);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 1) {
+        $row = $result->fetch_assoc();
+        $_SESSION['username'] = $row['Usuario'];
+        header("Location: inicio.php");
+        exit();
+    } else {
+        echo "Usuario o clave incorrectos.";
+        exit();
+    }
+
+    $stmt->close();
+
 } else {
     if (!isset($_SESSION['username'])) {
         header("Location: index.php");
@@ -132,7 +172,7 @@ $section = isset($_GET['section']) ? $_GET['section'] : 'productos';
     echo "<a href='total.php?section=total'>Total de Pedidos</a>";
     echo "<a href='clientes.php?section=clientes'>Clientes</a>";
     echo "<a href='productos.php?section=productos' class='active'>Productos</a>";
-    echo "<a href='index.php' style='float:right;'>Cerrar sesión</a>";
+    echo "<a href='logout.php' style='float:right;'>Cerrar sesión</a>";
     echo "</div>";
     
     echo "<div class='content'>";
