@@ -37,7 +37,7 @@ echo "<a href='pedidos.php?section=pedidos'>Agregar Pedidos</a>";
 echo "<a href='total.php?section=total'>Total de Pedidos</a>";
 echo "<a href='clientes.php?section=clientes' class='active'>Clientes</a>";
 echo "<a href='productos.php?section=productos'>Productos</a>";
-echo "<a href='index.php' style='float:right;'>Cerrar sesión</a>";
+echo "<a href='logout.php' style='float:right;'>Cerrar sesión</a>";
 echo "</div>";
 
 echo "<div class='content'>";
